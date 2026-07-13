@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoSort AI | Sustainable Waste Intelligence</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Three.js postprocessing (EffectComposer + passes) -->
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/postprocessing/UnrealBloomPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/shaders/FXAAShader.js"></script>
+    <script src="{{ url_for('static', filename='js/three-bg.js') }}" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Premium Animated Background -->
+    <div class="bg-container">
+        <canvas id="three-bg-canvas"></canvas>
+    </div>
+
+    <div class="layout">
+        <!-- Navigation -->
+        <nav class="container" style="display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 0; width: 100%;">
+            <div class="logo">
+                <i class="fas fa-leaf"></i> EcoSort AI
+            </div>
+            <div class="nav-links">
+                <a href="#classifier">Scanner</a>
+                <a href="#dashboard">Analytics</a>
+                <a href="/about">About</a>
+                {% if user %}
+                    <span style="color: var(--primary-dark); font-weight: 700; margin: 0 1rem;"><i class="fas fa-user-circle"></i> {{ user }}</span>
+                    <a href="/logout" class="btn-nav" style="background: var(--secondary);">Logout</a>
+                {% else %}
+                    <a href="#" class="btn-nav" id="show-login">Portal Login</a>
+                {% endif %}
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <section id="hero" class="hero container animate-up">
+            <div class="hero-content">
+                <div class="category-badge" style="margin-bottom: 1rem;"><i class="fas fa-microchip"></i> AI-Powered Sustainability</div>
+                <h1>Waste Intelligence <br><span style="background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">for a Circular Economy.</span></h1>
+                <p style="max-width: 520px;">Deploy enterprise-grade waste classification to your facility. EcoSort AI uses deep learning to identify, sort, and provide actionable recycling intelligence in milliseconds.</p>
+                <div style="display: flex; gap: 1rem; margin-top: 2.5rem; flex-wrap: wrap;">
+                    <a href="#classifier" class="btn btn-primary"><i class="fas fa-recycle"></i> Start Scanning</a>
+                    <a href="#dashboard" class="btn btn-outline"><i class="fas fa-chart-line"></i> View Analytics</a>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div id="globe-3d"></div>
+            </div>
+        </section>
+
+        <!-- Waste Guide Section -->
+        <section id="guide" class="section">
+            <div class="container animate-up">
+                <div style="margin-bottom: 3rem; text-align: center;">
+                    <h2>Common Waste Architectures</h2>
+                    <p class="text-muted">Understanding the core materials that power our circular economy.</p>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem;">
+                    <!-- Card: Plastic -->
+                    <div class="dashboard-card" style="overflow: hidden; padding: 0;">
+                        <img src="{{ url_for('static', filename='images/plastic_waste.png') }}" alt="Plastics" style="width: 100%; height: 200px; object-fit: cover;">
+                        <div style="padding: 1.5rem;">
+                            <h3 style="color: var(--primary); margin-bottom: 0.5rem;"><i class="fas fa-bottle-water"></i> Plastic</h3>
+                            <p class="text-muted" style="font-size: 0.95rem; line-height: 1.5;">Flexible, durable, and highly pervasive. It takes hundreds of years to degrade naturally, making aggressive AI-powered recycling strategies essential to prevent micro-pollution.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Card: Paper -->
+                    <div class="dashboard-card" style="overflow: hidden; padding: 0;">
+                        <img src="{{ url_for('static', filename='images/paper_waste.png') }}" alt="Paper" style="width: 100%; height: 200px; object-fit: cover;">
+                        <div style="padding: 1.5rem;">
+                            <h3 style="color: var(--secondary); margin-bottom: 0.5rem;"><i class="fas fa-box-open"></i> Paper & Cardboard</h3>
+                            <p class="text-muted" style="font-size: 0.95rem; line-height: 1.5;">Made from crushed wood pulp and cellulose. Highly recyclable, but oil contamination renders it unusable. Segregation at the source ensures clean bales for paper mills.</p>
+                        </div>
+                    </div>
+
+                    <!-- Card: Metal -->
+                    <div class="dashboard-card" style="overflow: hidden; padding: 0;">
+                        <img src="{{ url_for('static', filename='images/metal_waste.png') }}" alt="Metal" style="width: 100%; height: 200px; object-fit: cover;">
+                        <div style="padding: 1.5rem;">
+                            <h3 style="color: #be185d; margin-bottom: 0.5rem;"><i class="fas fa-hammer"></i> Metal & Alloys</h3>
+                            <p class="text-muted" style="font-size: 0.95rem; line-height: 1.5;">Aluminum and steel cans are infinitely recyclable without loss of quality. Reclaiming scrap metal saves up to 95% of the energy needed compared to raw ore mining.</p>
+                        </div>
+                    </div>
+
+                    <!-- Card: Organic -->
+                    <div class="dashboard-card" style="overflow: hidden; padding: 0;">
+                        <img src="{{ url_for('static', filename='images/organic_waste.png') }}" alt="Organic" style="width: 100%; height: 200px; object-fit: cover;">
+                        <div style="padding: 1.5rem;">
+                            <h3 style="color: #f59e0b; margin-bottom: 0.5rem;"><i class="fas fa-apple-whole"></i> Organic Waste</h3>
+                            <p class="text-muted" style="font-size: 0.95rem; line-height: 1.5;">Biologically degradable materials like food scraps and yard trimmings. When composted, it sequesters carbon and replenishes soil; thrown in landfills, it creates toxic methane gas.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Classifier Section -->
+        <section id="classifier" class="section bg-white">
+            <div class="container">
+                <div class="dashboard-card animate-up">
+                    <div class="result-header">
+                        <div>
+                            <h2>Real-time Waste Classifier</h2>
+                            <p class="text-muted">Upload or capture an image to identify the material and get disposal guidance.</p>
+                        </div>
+                        <div id="res-badge" class="category-badge" style="display: none;">Processed</div>
+                    </div>
+
+                    <main class="upload-area">
+                        {% if user %}
+                        <div id="drop-zone" class="upload-zone">
+                            <i class="fas fa-cloud-upload-alt" style="font-size: 2.5rem; color: var(--primary); margin-bottom: 1.5rem;"></i>
+                            <h3>Drop waste image here</h3>
+                            <p class="text-muted">or click to browse files (JPG, PNG)</p>
+                            <input type="file" id="file-input" hidden accept="image/*">
+                        </div>
+                        {% else %}
+                        <div class="upload-zone" style="background: rgba(0,0,0,0.02); border-style: solid; opacity: 0.8; cursor: pointer;" onclick="document.getElementById('login-modal').style.display='flex';">
+                            <i class="fas fa-lock" style="font-size: 2.5rem; color: var(--text-muted); margin-bottom: 1.5rem;"></i>
+                            <h3>Authentication Required</h3>
+                            <p class="text-muted">Please sign in or create an account to activate the AI scanner</p>
+                        </div>
+                        {% endif %}
+
+                        <div style="display: flex; gap: 1rem; margin-top: 1.5rem; justify-content: center;">
+                            {% if user %}
+                            <button class="btn btn-primary" id="upload-btn">
+                                <i class="fas fa-file-upload"></i> Upload Image
+                            </button>
+                            <button class="btn btn-outline" id="camera-btn">
+                                <i class="fas fa-camera"></i> Capture Live
+                            </button>
+                            {% else %}
+                            <div style="text-align: center; color: var(--text-muted); font-weight: 500; font-size: 1.1rem;">
+                                <i class="fas fa-lock" style="margin-right: 0.5rem; color: var(--primary);"></i>
+                                Please <a href="#" onclick="document.getElementById('login-modal').style.display='flex'; return false;" style="color: var(--primary); text-decoration: underline;">log in or sign up</a> to use the scanner.
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div id="loading" style="display: none; margin-top: 2rem; text-align: center;">
+                            <i class="fas fa-circle-notch fa-spin" style="color: var(--primary); font-size: 1.5rem;"></i>
+                            <p style="margin-top: 0.5rem;">AI Analyst is processing...</p>
+                        </div>
+
+                        <div id="result-section" class="result-section">
+                            <div style="display: grid; grid-template-columns: 300px 1fr; gap: 2.5rem;">
+                                <div class="image-preview">
+                                    <img id="preview-img" style="width: 100%; border-radius: 16px; border: 1px solid var(--border);" src="" alt="Capture">
+                                </div>
+                                <div class="info-box">
+                                    <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.5rem;">
+                                        <h3 id="res-category" style="font-size: 1.75rem; color: var(--text);">Material Name</h3>
+                                        <span id="res-confidence" style="font-weight: 700; color: var(--primary);">0%</span>
+                                    </div>
+                                    <div class="confidence-meter">
+                                        <div id="confidence-fill" class="confidence-progress"></div>
+                                    </div>
+
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; margin-top: 2rem;">
+                                        <div>
+                                            <h4 style="font-size: 0.9rem; color: var(--primary-dark); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Recycling Method</h4>
+                                            <p id="res-method" class="text-muted" style="font-size: 0.95rem; line-height: 1.5;"></p>
+                                        </div>
+                                        <div>
+                                            <h4 style="font-size: 0.9rem; color: var(--secondary); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Disposal Tip</h4>
+                                            <p id="res-tip" class="text-muted" style="font-size: 0.95rem; line-height: 1.5;"></p>
+                                        </div>
+                                        <div>
+                                            <h4 style="font-size: 0.9rem; color: #10b981; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Environmental Impact</h4>
+                                            <p id="res-impact" class="text-muted" style="font-size: 0.95rem; line-height: 1.5;"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dashboard / Analytics Section -->
+        <section id="dashboard" class="section">
+            <div class="container">
+                <div style="margin-bottom: 3rem;">
+                    <h2>Sustainability Dashboard</h2>
+                    <p class="text-muted">Real-time environmental impact and waste composition analytics.</p>
+                </div>
+
+                <div class="metric-grid">
+                    <div class="metric-card animate-up">
+                        <div class="metric-icon" style="background: var(--primary-light); color: var(--primary);"><i class="fas fa-recycle"></i></div>
+                        <div class="metric-info">
+                            <h4>Total Scans</h4>
+                            <p id="metric-total">0</p>
+                        </div>
+                    </div>
+                    <div class="metric-card animate-up" style="animation-delay: 0.1s;">
+                        <div class="metric-icon" style="background: #e0f2fe; color: #0369a1;"><i class="fas fa-box"></i></div>
+                        <div class="metric-info">
+                            <h4>Plastic</h4>
+                            <p id="metric-plastic">0</p>
+                        </div>
+                    </div>
+                    <div class="metric-card animate-up" style="animation-delay: 0.2s;">
+                        <div class="metric-icon" style="background: #fef3c7; color: #b45309;"><i class="fas fa-file-alt"></i></div>
+                        <div class="metric-info">
+                            <h4>Paper</h4>
+                            <p id="metric-paper">0</p>
+                        </div>
+                    </div>
+                    <div class="metric-card animate-up" style="animation-delay: 0.3s;">
+                        <div class="metric-icon" style="background: #fce7f3; color: #be185d;"><i class="fas fa-cog"></i></div>
+                        <div class="metric-info">
+                            <h4>Metal</h4>
+                            <p id="metric-metal">0</p>
+                        </div>
+                    </div>
+                    <div class="metric-card animate-up" style="animation-delay: 0.4s;">
+                        <div class="metric-icon" style="background: #fef3c7; color: #d97706;"><i class="fas fa-leaf"></i></div>
+                        <div class="metric-info">
+                            <h4>Organic</h4>
+                            <p id="metric-organic">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-grid animate-up">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Waste Composition</h3>
+                            <i class="fas fa-ellipsis-v text-muted"></i>
+                        </div>
+                        <canvas id="compositionChart" height="200"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Recycling Trend (7 Days)</h3>
+                            <i class="fas fa-ellipsis-v text-muted"></i>
+                        </div>
+                        <canvas id="trendChart" height="200"></canvas>
+                    </div>
+                </div>
+
+                <div class="data-table-container animate-up">
+                    <div class="chart-header">
+                        <h3>Recent Segregation Logs</h3>
+                        <div class="search-bar" style="width: 250px; margin-bottom: 0; background: var(--background);">
+                            <i class="fas fa-filter" style="color: var(--text-muted); font-size: 0.8rem;"></i>
+                            <input type="text" placeholder="Filter logs..." style="font-size: 0.8rem; background: transparent;">
+                        </div>
+                    </div>
+                    <table id="history-table">
+                        <thead>
+                            <tr>
+                                <th># ID</th>
+                                <th>Location</th>
+                                <th>Type</th>
+                                <th>Confidence</th>
+                                <th>Timestamp</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-body">
+                            <!-- Real logs will be injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Login / Sign Up Modal -->
+        <div id="login-modal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center;">
+            <div class="dashboard-card" style="width: 420px; padding: 2.5rem; position: relative;">
+                <i class="fas fa-times" id="close-login" style="position: absolute; top: 1.5rem; right: 1.5rem; cursor: pointer; color: var(--text-muted);"></i>
+                <h2 style="margin-bottom: 1.5rem; text-align: center;">Portal Access</h2>
+
+                <!-- Tabs -->
+                <div style="display: flex; border-bottom: 2px solid var(--border); margin-bottom: 1.5rem;">
+                    <button id="tab-login" onclick="switchAuthTab('login')" style="flex: 1; padding: 0.6rem; border: none; background: none; cursor: pointer; font-weight: 600; color: var(--primary); border-bottom: 2px solid var(--primary); margin-bottom: -2px; font-size: 0.95rem;">Sign In</button>
+                    <button id="tab-signup" onclick="switchAuthTab('signup')" style="flex: 1; padding: 0.6rem; border: none; background: none; cursor: pointer; font-weight: 600; color: var(--text-muted); border-bottom: 2px solid transparent; margin-bottom: -2px; font-size: 0.95rem;">Sign Up</button>
+                </div>
+
+                <!-- Sign In Form -->
+                <form id="form-login">
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">Username</label>
+                        <input type="text" id="login-user" class="form-control" placeholder="Enter username" required>
+                    </div>
+                    <div style="margin-bottom: 2rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">Password</label>
+                        <input type="password" id="login-pass" class="form-control" placeholder="Enter password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="do-login" style="width: 100%; justify-content: center;"><i class="fas fa-sign-in-alt"></i> Sign In</button>
+                    <p id="login-error" style="text-align: center; margin-top: 0.75rem; font-size: 0.85rem; color: #f87171; display: none;"></p>
+                    <p style="text-align: center; margin-top: 1rem; font-size: 0.82rem; color: var(--text-muted);">Default: <code style="color: var(--primary);">admin</code> / <code style="color: var(--primary);">password</code></p>
+                </form>
+
+                <!-- Sign Up Form -->
+                <form id="form-signup" style="display: none;">
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">New Username</label>
+                        <input type="text" id="signup-user" class="form-control" placeholder="Choose a username" required>
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">Password</label>
+                        <input type="password" id="signup-pass" class="form-control" placeholder="Create a password" required>
+                    </div>
+                    <div style="margin-bottom: 2rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">Confirm Password</label>
+                        <input type="password" id="signup-confirm" class="form-control" placeholder="Confirm your password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="do-signup" style="width: 100%; justify-content: center;"><i class="fas fa-user-plus"></i> Create Account</button>
+                    <p id="signup-msg" style="text-align: center; margin-top: 0.75rem; font-size: 0.85rem; color: #f87171; display: none;"></p>
+                </form>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="container" style="padding: 4rem 0; border-top: 1px solid var(--border); text-align: center;">
+            <div class="logo" style="justify-content: center; margin-bottom: 1.5rem;">
+                <i class="fas fa-leaf"></i> EcoSort AI
+            </div>
+            <p class="text-muted">&copy; 2026 EcoSort AI. Driving global sustainability with precision intelligence.</p>
+        </footer>
+    </div>
+
+    <!-- Camera Preview (hidden by default, shown inside classifier on capture) -->
+    <div id="camera-container" style="display:none; margin-top: 1.5rem; border-radius: 16px; overflow: hidden; border: 1px solid var(--border);">
+        <video id="video" autoplay playsinline style="width: 100%; border-radius: 16px; display: block;"></video>
+    </div>
+    <canvas id="canvas" style="display:none;"></canvas>
+
+    <script src="{{ url_for('static', filename='js/bg-animation.js') }}"></script>
+    <!-- Lenis (smooth scroll) + GSAP (animation timing) -->
+    <script src="https://cdn.jsdelivr.net/npm/@studio-freight/lenis@1.0.27/bundled/lenis.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="{{ url_for('static', filename='js/scroll-anim.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // Initialize Charts with real-time data
+        let compositionChart, trendChart;
+
+        async function loadDashboardStats() {
+            try {
+                const res = await fetch('/api/stats');
+                const stats = await res.json();
+
+                // Update metric cards
+                document.getElementById('metric-total').innerText = stats.total_scans;
+                document.getElementById('metric-plastic').innerText = stats.composition[0];
+                document.getElementById('metric-paper').innerText = stats.composition[1];
+                document.getElementById('metric-metal').innerText = stats.composition[2];
+                const organicEl = document.getElementById('metric-organic');
+                if (organicEl) organicEl.innerText = stats.composition[3] || 0;
+
+                // Composition donut chart
+                const compData = stats.composition;
+                const compLabels = stats.composition_labels;
+
+                if (compositionChart) { compositionChart.destroy(); }
+                const ctxComposition = document.getElementById('compositionChart').getContext('2d');
+                compositionChart = new Chart(ctxComposition, {
+                    type: 'doughnut',
+                    data: {
+                        labels: compLabels,
+                        datasets: [{
+                            data: compData,
+                            backgroundColor: ['#00f0ff', '#ffd700', '#be185d', '#10b981'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        plugins: { 
+                            legend: { position: 'bottom' },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        const value = context.parsed;
+                                        let total = 0;
+                                        const dataset = context.chart.data.datasets[0];
+                                        dataset.data.forEach(dataPoint => { total += dataPoint; });
+                                        
+                                        const percentage = total > 0 ? Math.round((value / total) * 100) + '%' : '0%';
+                                        return label + percentage + ' (' + value + ' items)';
+                                    }
+                                }
+                            }
+                        },
+                        cutout: '70%'
+                    }
+                });
+
+                // Trend line chart
+                if (trendChart) { trendChart.destroy(); }
+                const ctxTrend = document.getElementById('trendChart').getContext('2d');
+                trendChart = new Chart(ctxTrend, {
+                    type: 'line',
+                    data: {
+                        labels: stats.trend_labels,
+                        datasets: [{
+                            label: 'Items Scanned',
+                            data: stats.trend_data,
+                            borderColor: '#00f0ff',
+                            tension: 0.4,
+                            fill: true,
+                            backgroundColor: 'rgba(0, 240, 255, 0.1)'
+                        }]
+                    },
+                    options: {
+                        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            } catch (err) {
+                console.error('Dashboard stats error:', err);
+            }
+        }
+
+        // Load on page ready
+        loadDashboardStats();
+
+        // Smooth scroll for anchors (skip bare '#' hrefs like the login button)
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                const href = this.getAttribute('href');
+                if (!href || href === '#') return;
+                const target = document.querySelector(href);
+                if (!target) return;
+                e.preventDefault();
+                target.scrollIntoView({ behavior: 'smooth' });
+            });
+        });
+    </script>
+</body>
+</html>

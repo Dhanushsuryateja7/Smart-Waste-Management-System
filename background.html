@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Waste AI — Ultra 3D Background</title>
+  <meta name="description" content="AI-powered Smart Waste Classification System — ultra-premium 3D interactive background" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;600;700;900&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --neon-blue: #00d4ff;
+      --neon-green: #00ff88;
+      --neon-purple: #a855f7;
+      --dark-bg: #020810;
+      --glass-bg: rgba(0, 212, 255, 0.04);
+      --glass-border: rgba(0, 212, 255, 0.15);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: var(--dark-bg);
+      font-family: 'Inter', sans-serif;
+      cursor: none;
+    }
+
+    /* ── CANVAS ───────────────────────────────────────────── */
+    #three-canvas {
+      position: fixed; inset: 0;
+      width: 100vw; height: 100vh;
+      z-index: 0;
+      display: block;
+    }
+
+    /* ── CUSTOM CURSOR ───────────────────────────────────── */
+    #cursor-outer, #cursor-inner {
+      position: fixed; border-radius: 50%;
+      pointer-events: none; z-index: 9999;
+      transform: translate(-50%,-50%);
+      transition: transform 0.1s ease;
+    }
+    #cursor-outer {
+      width: 36px; height: 36px;
+      border: 1.5px solid var(--neon-blue);
+      transition: width .25s, height .25s, opacity .25s;
+      box-shadow: 0 0 12px var(--neon-blue);
+      opacity: .6;
+    }
+    #cursor-inner {
+      width: 6px; height: 6px;
+      background: var(--neon-blue);
+      box-shadow: 0 0 8px var(--neon-blue);
+    }
+
+    /* ── OVERLAY UI ──────────────────────────────────────── */
+    #ui-overlay {
+      position: fixed; inset: 0; z-index: 10;
+      pointer-events: none;
+      display: flex; flex-direction: column;
+    }
+
+    /* Top bar */
+    #top-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 28px 48px 0;
+    }
+    #logo {
+      font-family: 'Orbitron', monospace;
+      font-size: 13px; font-weight: 700;
+      letter-spacing: 4px;
+      color: var(--neon-green);
+      text-shadow: 0 0 20px rgba(0,255,136,.6);
+    }
+    #logo span { color: var(--neon-blue); }
+    #nav-pills { display: flex; gap: 32px; }
+    .nav-pill {
+      font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+      color: rgba(255,255,255,.45);
+      font-weight: 400;
+    }
+    #status-badge {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--neon-green);
+    }
+    .pulse-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--neon-green);
+      box-shadow: 0 0 8px var(--neon-green);
+      animation: pulse-dot 1.6s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50% { opacity: .4; transform: scale(.7); }
+    }
+
+    /* Centre hero text */
+    #hero {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center; padding: 0 24px;
+    }
+    #hero-eyebrow {
+      font-size: 10px; letter-spacing: 6px; text-transform: uppercase;
+      color: var(--neon-blue); margin-bottom: 24px;
+      animation: fadeSlideDown .9s ease both;
+    }
+    #hero-title {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(28px, 5vw, 72px);
+      font-weight: 900; line-height: 1.1;
+      color: #fff;
+      text-shadow: 0 0 60px rgba(0,212,255,.3);
+      animation: fadeSlideDown 1s .15s ease both;
+    }
+    #hero-title em {
+      font-style: normal;
+      background: linear-gradient(135deg, var(--neon-blue), var(--neon-green));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    #hero-sub {
+      margin-top: 22px;
+      font-size: clamp(12px, 1.4vw, 16px);
+      color: rgba(255,255,255,.45); font-weight: 300;
+      max-width: 520px; line-height: 1.8;
+      animation: fadeSlideDown 1s .3s ease both;
+    }
+    #cta-row {
+      margin-top: 44px; display: flex; gap: 18px;
+      animation: fadeSlideDown 1s .45s ease both;
+      pointer-events: all;
+    }
+    .btn-primary {
+      padding: 14px 36px;
+      background: linear-gradient(135deg, var(--neon-blue), var(--neon-green));
+      border: none; border-radius: 60px;
+      font-family: 'Inter', sans-serif;
+      font-size: 12px; font-weight: 700; letter-spacing: 2px;
+      color: #020810; cursor: pointer;
+      text-transform: uppercase;
+      box-shadow: 0 0 30px rgba(0,212,255,.35);
+      transition: transform .2s, box-shadow .2s;
+      text-decoration: none; display: inline-flex; align-items: center;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 0 60px rgba(0,212,255,.6);
+    }
+    .btn-ghost {
+      padding: 14px 36px;
+      background: transparent;
+      border: 1px solid var(--glass-border);
+      border-radius: 60px;
+      font-size: 12px; font-weight: 600; letter-spacing: 2px;
+      color: rgba(255,255,255,.7); cursor: pointer;
+      text-transform: uppercase;
+      backdrop-filter: blur(10px);
+      transition: border-color .2s, color .2s, box-shadow .2s;
+      text-decoration: none; display: inline-flex; align-items: center;
+    }
+    .btn-ghost:hover {
+      border-color: var(--neon-blue);
+      color: var(--neon-blue);
+      box-shadow: 0 0 24px rgba(0,212,255,.25);
+    }
+
+    /* Bottom HUD */
+    #bottom-hud {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      padding: 0 48px 36px; gap: 16px;
+    }
+    .hud-card {
+      background: rgba(0,10,24,.5);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 16px 20px;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      position: relative; overflow: hidden;
+    }
+    .hud-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--neon-blue), transparent);
+      opacity: .6;
+    }
+    .hud-label {
+      font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
+      color: rgba(255,255,255,.35); margin-bottom: 8px;
+    }
+    .hud-value {
+      font-family: 'Orbitron', monospace;
+      font-size: 22px; font-weight: 700;
+      color: #fff;
+    }
+    .hud-value.green { color: var(--neon-green); text-shadow: 0 0 16px rgba(0,255,136,.4); }
+    .hud-value.blue  { color: var(--neon-blue);  text-shadow: 0 0 16px rgba(0,212,255,.4); }
+    .hud-sub { font-size: 10px; color: rgba(255,255,255,.3); margin-top: 4px; }
+    .hud-bar {
+      height: 3px; border-radius: 99px;
+      background: rgba(255,255,255,.07);
+      margin-top: 10px; overflow: hidden;
+    }
+    .hud-bar-fill {
+      height: 100%; border-radius: 99px;
+      background: linear-gradient(90deg, var(--neon-blue), var(--neon-green));
+      box-shadow: 0 0 8px var(--neon-green);
+      animation: bar-fill 2.5s ease both;
+    }
+    @keyframes bar-fill {
+      from { width: 0; }
+    }
+
+    /* Classification panel (right side) */
+    #class-panel {
+      position: fixed; right: 48px; top: 50%; transform: translateY(-50%);
+      z-index: 10; pointer-events: none;
+      display: flex; flex-direction: column; gap: 10px;
+      width: 200px;
+    }
+    .class-chip {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px;
+      background: rgba(0,10,24,.6);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 10px;
+      backdrop-filter: blur(16px);
+      animation: chipIn .5s ease both;
+    }
+    .class-chip:nth-child(1) { animation-delay: .1s; }
+    .class-chip:nth-child(2) { animation-delay: .2s; }
+    .class-chip:nth-child(3) { animation-delay: .3s; }
+    .class-chip:nth-child(4) { animation-delay: .4s; }
+    .class-chip:nth-child(5) { animation-delay: .5s; }
+    .class-chip:nth-child(6) { animation-delay: .6s; }
+    @keyframes chipIn {
+      from { opacity: 0; transform: translateX(20px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    .chip-dot {
+      width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+    }
+    .chip-info { flex: 1; }
+    .chip-name { font-size: 10px; color: rgba(255,255,255,.6); letter-spacing: 1px; }
+    .chip-pct {
+      font-family: 'Orbitron', monospace;
+      font-size: 12px; color: #fff; font-weight: 700;
+      animation: countUp 2s ease both;
+    }
+    @keyframes countUp {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* Left side vertical stats */
+    #left-panel {
+      position: fixed; left: 48px; top: 50%; transform: translateY(-50%);
+      z-index: 10; pointer-events: none;
+      display: flex; flex-direction: column; gap: 24px;
+    }
+    .v-stat {
+      font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
+      color: rgba(255,255,255,.25);
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      transform: rotate(180deg);
+    }
+    .v-line {
+      width: 1px; height: 80px;
+      background: linear-gradient(180deg, transparent, var(--neon-blue), transparent);
+      margin: 0 auto; opacity: .4;
+    }
+
+    /* Scanning overlay line */
+    #scan-line {
+      position: fixed; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent 0%, var(--neon-blue) 30%, var(--neon-green) 70%, transparent 100%);
+      opacity: .18; z-index: 5; pointer-events: none;
+      animation: scanMove 6s linear infinite;
+    }
+    @keyframes scanMove {
+      0% { top: 0; }
+      100% { top: 100%; }
+    }
+
+    /* Vignette */
+    #vignette {
+      position: fixed; inset: 0; z-index: 4; pointer-events: none;
+      background: radial-gradient(ellipse at center, transparent 40%, rgba(2,8,16,.85) 100%);
+    }
+
+    /* Corner decoration */
+    .corner {
+      position: fixed; width: 60px; height: 60px;
+      border-color: rgba(0,212,255,.25); z-index: 10; pointer-events: none;
+    }
+    .corner-tl { top: 20px; left: 20px; border-top: 1px solid; border-left: 1px solid; border-color: rgba(0,212,255,.3); }
+    .corner-tr { top: 20px; right: 20px; border-top: 1px solid; border-right: 1px solid; border-color: rgba(0,212,255,.3); }
+    .corner-bl { bottom: 20px; left: 20px; border-bottom: 1px solid; border-left: 1px solid; border-color: rgba(0,212,255,.3); }
+    .corner-br { bottom: 20px; right: 20px; border-bottom: 1px solid; border-right: 1px solid; border-color: rgba(0,212,255,.3); }
+
+    /* Animations */
+    @keyframes fadeSlideDown {
+      from { opacity: 0; transform: translateY(-16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Scrolling ticker */
+    #ticker {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 10;
+      pointer-events: none;
+      overflow: hidden; height: 32px;
+      border-top: 1px solid rgba(0,212,255,.08);
+      background: rgba(2,8,16,.7);
+      backdrop-filter: blur(12px);
+      display: flex; align-items: center;
+    }
+    #ticker-track {
+      display: flex; align-items: center; gap: 48px;
+      white-space: nowrap;
+      animation: ticker 35s linear infinite;
+      font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
+      color: rgba(255,255,255,.3);
+    }
+    #ticker-track span { color: var(--neon-blue); }
+    @keyframes ticker {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+
+    /* Mini AI processing ring */
+    #ai-ring {
+      position: fixed; left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      width: 220px; height: 220px;
+      z-index: 3; pointer-events: none;
+    }
+    .ring-svg { width: 100%; height: 100%; animation: ringRotate 8s linear infinite; }
+    .ring-svg2 { width: 80%; height: 80%; position: absolute; top: 10%; left: 10%; animation: ringRotate 5s linear infinite reverse; }
+    @keyframes ringRotate {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+    .ring-path { fill: none; stroke: var(--neon-blue); stroke-width: .8; opacity: .18; stroke-dasharray: 8 4; }
+    .ring-path2 { fill: none; stroke: var(--neon-green); stroke-width: .6; opacity: .14; stroke-dasharray: 4 8; }
+
+    /* noise grain overlay */
+    #grain {
+      position: fixed; inset: 0; z-index: 8; pointer-events: none;
+      opacity: .025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      animation: grainAnim .4s steps(1) infinite;
+    }
+    @keyframes grainAnim {
+      0% { transform: translate(0,0); }
+      25% { transform: translate(-1px,1px); }
+      50% { transform: translate(1px,-1px); }
+      75% { transform: translate(-1px,-1px); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── THREE.JS CANVAS ─────────────────────────────────── -->
+<canvas id="three-canvas"></canvas>
+
+<!-- ── VISUAL OVERLAYS ─────────────────────────────────── -->
+<div id="vignette"></div>
+<div id="scan-line"></div>
+<div id="grain"></div>
+
+<!-- ── AI RING DECORATION ──────────────────────────────── -->
+<div id="ai-ring">
+  <svg class="ring-svg" viewBox="0 0 100 100">
+    <circle cx="50" cy="50" r="48" class="ring-path"/>
+    <circle cx="50" cy="50" r="38" class="ring-path" style="stroke-dasharray:3 9;opacity:.1"/>
+  </svg>
+  <svg class="ring-svg2" viewBox="0 0 100 100">
+    <circle cx="50" cy="50" r="48" class="ring-path2"/>
+  </svg>
+</div>
+
+<!-- ── CORNER BRACKETS ──────────────────────────────────── -->
+<div class="corner corner-tl"></div>
+<div class="corner corner-tr"></div>
+<div class="corner corner-bl"></div>
+<div class="corner corner-br"></div>
+
+<!-- ── CURSOR ──────────────────────────────────────────── -->
+<div id="cursor-outer"></div>
+<div id="cursor-inner"></div>
+
+<!-- ── UI OVERLAY ─────────────────────────────────────── -->
+<div id="ui-overlay">
+
+  <!-- TOP BAR -->
+  <div id="top-bar">
+    <div id="logo">SMART<span>WASTE</span> · AI</div>
+    <div id="nav-pills">
+      <span class="nav-pill">System</span>
+      <span class="nav-pill">Analytics</span>
+      <span class="nav-pill">Neural</span>
+    </div>
+    <div id="status-badge">
+      <div class="pulse-dot"></div>
+      AI Active
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <div id="hero">
+    <div id="hero-eyebrow">Next-Generation Waste Intelligence</div>
+    <h1 id="hero-title">
+      AI-Powered<br/><em>Waste Classification</em>
+    </h1>
+    <p id="hero-sub">
+      Autonomous neural sorting with 99.8% accuracy across six material streams.
+      Real-time holographic guidance. Zero-waste future.
+    </p>
+    <div id="cta-row">
+      <a href="/" class="btn-primary">Launch System</a>
+      <a href="#" class="btn-ghost">View Analytics</a>
+    </div>
+  </div>
+
+  <!-- BOTTOM HUD -->
+  <div id="bottom-hud">
+    <div class="hud-card">
+      <div class="hud-label">Items Classified Today</div>
+      <div class="hud-value green" id="count-items">0</div>
+      <div class="hud-sub">↑ 18% from yesterday</div>
+      <div class="hud-bar"><div class="hud-bar-fill" style="width:87%"></div></div>
+    </div>
+    <div class="hud-card">
+      <div class="hud-label">Neural Accuracy</div>
+      <div class="hud-value blue" id="count-acc">0%</div>
+      <div class="hud-sub">Model v4.2 · 6-class CNN</div>
+      <div class="hud-bar"><div class="hud-bar-fill" style="width:99%"></div></div>
+    </div>
+    <div class="hud-card">
+      <div class="hud-label">CO₂ Offset Today</div>
+      <div class="hud-value green" id="count-co2">0 kg</div>
+      <div class="hud-sub">Equivalent to 47 trees</div>
+      <div class="hud-bar"><div class="hud-bar-fill" style="width:72%"></div></div>
+    </div>
+  </div>
+
+</div><!-- /ui-overlay -->
+
+<!-- ── CLASSIFICATION PANEL ────────────────────────────── -->
+<div id="class-panel">
+  <div class="class-chip"><div class="chip-dot" style="background:#00d4ff;box-shadow:0 0 8px #00d4ff"></div><div class="chip-info"><div class="chip-name">Plastic</div><div class="chip-pct" id="pct-plastic">34%</div></div></div>
+  <div class="class-chip"><div class="chip-dot" style="background:#a855f7;box-shadow:0 0 8px #a855f7"></div><div class="chip-info"><div class="chip-name">Metal</div><div class="chip-pct" id="pct-metal">18%</div></div></div>
+  <div class="class-chip"><div class="chip-dot" style="background:#f59e0b;box-shadow:0 0 8px #f59e0b"></div><div class="chip-info"><div class="chip-name">Paper</div><div class="chip-pct" id="pct-paper">22%</div></div></div>
+  <div class="class-chip"><div class="chip-dot" style="background:#10b981;box-shadow:0 0 8px #10b981"></div><div class="chip-info"><div class="chip-name">Glass</div><div class="chip-pct" id="pct-glass">11%</div></div></div>
+  <div class="class-chip"><div class="chip-dot" style="background:#00ff88;box-shadow:0 0 8px #00ff88"></div><div class="chip-info"><div class="chip-name">Organic</div><div class="chip-pct" id="pct-organic">9%</div></div></div>
+  <div class="class-chip"><div class="chip-dot" style="background:#ef4444;box-shadow:0 0 8px #ef4444"></div><div class="chip-info"><div class="chip-name">E-Waste</div><div class="chip-pct" id="pct-ewaste">6%</div></div></div>
+</div>
+
+<!-- ── LEFT PANEL ──────────────────────────────────────── -->
+<div id="left-panel">
+  <div class="v-stat">System Online</div>
+  <div class="v-line"></div>
+  <div class="v-stat">Neural v4.2</div>
+</div>
+
+<!-- ── TICKER ──────────────────────────────────────────── -->
+<div id="ticker">
+  <div id="ticker-track">
+    PLASTIC <span>▸</span> RECYCLED · METAL <span>▸</span> SMELTED · PAPER <span>▸</span> PULPED · GLASS <span>▸</span> REMELTED · ORGANIC <span>▸</span> COMPOSTED · E-WASTE <span>▸</span> RECOVERED · &nbsp;&nbsp; PLASTIC <span>▸</span> RECYCLED · METAL <span>▸</span> SMELTED · PAPER <span>▸</span> PULPED · GLASS <span>▸</span> REMELTED · ORGANIC <span>▸</span> COMPOSTED · E-WASTE <span>▸</span> RECOVERED ·
+  </div>
+</div>
+
+<!-- ── THREE.JS & SCENE SCRIPT ─────────────────────────── -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  /* ─── SCENE BOOTSTRAP ─────────────────────────────────── */
+  const canvas = document.getElementById('three-canvas');
+  const W = () => window.innerWidth;
+  const H = () => window.innerHeight;
+
+  const renderer = new THREE.WebGLRenderer({
+    canvas,
+    antialias: true,
+    alpha: true,
+    powerPreference: 'high-performance'
+  });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(W(), H());
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.1;
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x020810);
+  scene.fog = new THREE.FogExp2(0x020810, 0.012);
+
+  const camera = new THREE.PerspectiveCamera(55, W() / H(), 0.1, 600);
+  camera.position.set(0, 12, 55);
+
+  /* ─── MOUSE ────────────────────────────────────────────── */
+  const mouse = { x: 0, y: 0, px: 0, py: 0 };
+  window.addEventListener('mousemove', e => {
+    mouse.x = (e.clientX / W()) * 2 - 1;
+    mouse.y = -(e.clientY / H()) * 2 + 1;
+    // cursor
+    document.getElementById('cursor-outer').style.left = e.clientX + 'px';
+    document.getElementById('cursor-outer').style.top = e.clientY + 'px';
+    document.getElementById('cursor-inner').style.left = e.clientX + 'px';
+    document.getElementById('cursor-inner').style.top = e.clientY + 'px';
+  });
+
+  /* ─── HELPERS ──────────────────────────────────────────── */
+  const randF = (a, b) => a + Math.random() * (b - a);
+  const randI = (a, b) => Math.floor(randF(a, b));
+
+  /* ─── WASTE CATEGORY COLOURS ────────────────────────────── */
+  const CATS = [
+    { name: 'Plastic',  hex: 0x00d4ff, css: '#00d4ff' },
+    { name: 'Metal',    hex: 0xa855f7, css: '#a855f7' },
+    { name: 'Paper',    hex: 0xf59e0b, css: '#f59e0b' },
+    { name: 'Glass',    hex: 0x10b981, css: '#10b981' },
+    { name: 'Organic',  hex: 0x00ff88, css: '#00ff88' },
+    { name: 'E-Waste',  hex: 0xef4444, css: '#ef4444' },
+  ];
+
+  /* ═══════════════════════════════════════════════════════════
+     LIGHTING
+  ═══════════════════════════════════════════════════════════ */
+  scene.add(new THREE.AmbientLight(0x0a1628, 1.2));
+
+  // Key lights
+  const addPointLight = (color, intensity, x, y, z, distance) => {
+    const l = new THREE.PointLight(color, intensity, distance);
+    l.position.set(x, y, z);
+    l.castShadow = true;
+    scene.add(l);
+    return l;
+  };
+  const lightBlue  = addPointLight(0x00d4ff, 3.5, -30, 20, 20, 120);
+  const lightGreen = addPointLight(0x00ff88, 3.0, 30, -15, 25, 120);
+  const lightPurp  = addPointLight(0xa855f7, 2.0, 0, 30, -10, 80);
+  const lightBtm   = addPointLight(0x00d4ff, 1.8, 0, -30, 10, 90);
+
+  // Directional (rim)
+  const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
+  dirLight.position.set(20, 40, 20);
+  dirLight.castShadow = true;
+  scene.add(dirLight);
+
+  /* ═══════════════════════════════════════════════════════════
+     GRID FLOOR
+  ═══════════════════════════════════════════════════════════ */
+  (function buildFloor() {
+    // Reflective floor plane
+    const floorGeo = new THREE.PlaneGeometry(200, 200, 60, 60);
+    const floorMat = new THREE.MeshStandardMaterial({
+      color: 0x010810,
+      roughness: 0.15,
+      metalness: 0.85,
+      transparent: true, opacity: 0.9
+    });
+    const floor = new THREE.Mesh(floorGeo, floorMat);
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -18;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    // Grid lines
+    const gridHelper = new THREE.GridHelper(200, 60, 0x001a2e, 0x001a2e);
+    gridHelper.position.y = -17.9;
+    const gMat = gridHelper.material;
+    gMat.transparent = true; gMat.opacity = 0.45;
+    scene.add(gridHelper);
+  })();
+
+  /* ═══════════════════════════════════════════════════════════
+     STARS / DUST PARTICLES
+  ═══════════════════════════════════════════════════════════ */
+  function makeParticles(count, spread, size, color, opacity) {
+    const geo = new THREE.BufferGeometry();
+    const pos = new Float32Array(count * 3);
+    for (let i = 0; i < count * 3; i++) pos[i] = randF(-spread, spread);
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+
+    const c = document.createElement('canvas');
+    c.width = c.height = 32;
+    const ctx = c.getContext('2d');
+    const g = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+    g.addColorStop(0, `rgba(255,255,255,1)`);
+    g.addColorStop(0.4, `rgba(${color},0.6)`);
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, 32, 32);
+
+    const mat = new THREE.PointsMaterial({
+      size, map: new THREE.CanvasTexture(c),
+      transparent: true, opacity,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false, vertexColors: false
+    });
+    const pts = new THREE.Points(geo, mat);
+    scene.add(pts);
+    return pts;
+  }
+
+  const starField   = makeParticles(900, 250, 0.55, '0,212,255', 0.7);
+  const dustField   = makeParticles(500, 80,  0.22, '0,255,136', 0.4);
+  const energyField = makeParticles(300, 60,  0.35, '168,85,247', 0.3);
+
+  /* ═══════════════════════════════════════════════════════════
+     CENTRAL RECYCLING STATION
+  ═══════════════════════════════════════════════════════════ */
+  const station = new THREE.Group();
+  scene.add(station);
+
+  // Base platform ring
+  (function buildStation() {
+    const platform = new THREE.Mesh(
+      new THREE.CylinderGeometry(9, 10, 1.2, 64),
+      new THREE.MeshStandardMaterial({ color: 0x0a1628, roughness: 0.2, metalness: 0.95 })
+    );
+    platform.position.y = -17;
+    platform.receiveShadow = true;
+    station.add(platform);
+
+    // Glowing ring on platform
+    const ringGeo = new THREE.TorusGeometry(9.2, 0.12, 16, 128);
+    const ringMat = new THREE.MeshBasicMaterial({ color: 0x00d4ff });
+    const ring = new THREE.Mesh(ringGeo, ringMat);
+    ring.rotation.x = Math.PI / 2;
+    ring.position.y = -16.3;
+    station.add(ring);
+
+    // Central column / pillar
+    const col = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.6, 0.8, 18, 32),
+      new THREE.MeshStandardMaterial({ color: 0x0d1f3a, roughness: 0.1, metalness: 0.9 })
+    );
+    col.position.y = -8;
+    col.castShadow = true;
+    station.add(col);
+
+    // Top scanner sphere (the AI brain)
+    const brainGeo = new THREE.IcosahedronGeometry(2.2, 2);
+    const brainMat = new THREE.MeshStandardMaterial({
+      color: 0x001a2e,
+      roughness: 0.05,
+      metalness: 0.9,
+      emissive: 0x003355,
+      emissiveIntensity: 0.6
+    });
+    const brain = new THREE.Mesh(brainGeo, brainMat);
+    brain.position.y = 2;
+    brain.castShadow = true;
+    station.add(brain);
+
+    // Wireframe overlay on brain
+    const wfMat = new THREE.MeshBasicMaterial({
+      color: 0x00d4ff, wireframe: true, transparent: true, opacity: 0.25
+    });
+    const wfBrain = new THREE.Mesh(brainGeo.clone(), wfMat);
+    wfBrain.position.copy(brain.position);
+    wfBrain.scale.setScalar(1.03);
+    station.add(wfBrain);
+    station._brain = brain;
+    station._wfBrain = wfBrain;
+
+    // Rotating scanner ring around brain
+    const scanRingGeo = new THREE.TorusGeometry(3.5, 0.05, 8, 128);
+    const scanRingMat = new THREE.MeshBasicMaterial({ color: 0x00ff88, transparent: true, opacity: 0.8 });
+    const scanRing = new THREE.Mesh(scanRingGeo, scanRingMat);
+    scanRing.position.copy(brain.position);
+    station.add(scanRing);
+    station._scanRing = scanRing;
+
+    const scanRing2 = new THREE.Mesh(
+      new THREE.TorusGeometry(3.5, 0.04, 8, 128),
+      new THREE.MeshBasicMaterial({ color: 0x00d4ff, transparent: true, opacity: 0.6 })
+    );
+    scanRing2.position.copy(brain.position);
+    scanRing2.rotation.x = Math.PI / 2;
+    station.add(scanRing2);
+    station._scanRing2 = scanRing2;
+
+    // Six bins around the centre
+    CATS.forEach((cat, i) => {
+      const angle = (i / 6) * Math.PI * 2;
+      const r = 7;
+      const bx = Math.cos(angle) * r;
+      const bz = Math.sin(angle) * r;
+
+      const binGroup = new THREE.Group();
+      binGroup.position.set(bx, -16, bz);
+
+      // bin body
+      const binBody = new THREE.Mesh(
+        new THREE.CylinderGeometry(1.0, 0.85, 2.8, 20, 1, true),
+        new THREE.MeshStandardMaterial({
+          color: cat.hex,
+          roughness: 0.2, metalness: 0.7,
+          transparent: true, opacity: 0.35,
+          side: THREE.DoubleSide
+        })
+      );
+      binGroup.add(binBody);
+
+      // bin rim
+      const rim = new THREE.Mesh(
+        new THREE.TorusGeometry(1.0, 0.06, 8, 40),
+        new THREE.MeshBasicMaterial({ color: cat.hex })
+      );
+      rim.rotation.x = Math.PI / 2;
+      rim.position.y = 1.4;
+      binGroup.add(rim);
+
+      // Glowing base disc
+      const disc = new THREE.Mesh(
+        new THREE.CircleGeometry(1.1, 32),
+        new THREE.MeshBasicMaterial({ color: cat.hex, transparent: true, opacity: 0.15, side: THREE.DoubleSide })
+      );
+      disc.rotation.x = -Math.PI / 2;
+      disc.position.y = -1.4;
+      binGroup.add(disc);
+
+      // label canvas
+      const lc = document.createElement('canvas');
+      lc.width = 256; lc.height = 64;
+      const lctx = lc.getContext('2d');
+      lctx.fillStyle = cat.css;
+      lctx.font = 'bold 28px Orbitron, monospace';
+      lctx.textAlign = 'center'; lctx.textBaseline = 'middle';
+      lctx.fillText(cat.name.toUpperCase(), 128, 32);
+      const labelTex = new THREE.CanvasTexture(lc);
+      const labelMesh = new THREE.Mesh(
+        new THREE.PlaneGeometry(2.2, 0.55),
+        new THREE.MeshBasicMaterial({ map: labelTex, transparent: true, opacity: 0.9, side: THREE.DoubleSide })
+      );
+      labelMesh.position.y = 2.2;
+      labelMesh.rotation.x = -0.25;
+      binGroup.add(labelMesh);
+
+      station.add(binGroup);
+      binGroup._baseY = -16;
+      station['bin' + i] = binGroup;
+    });
+  })();
+
+  /* ═══════════════════════════════════════════════════════════
+     FLOATING WASTE ITEMS  (orbiting → falling into correct bin)
+  ═══════════════════════════════════════════════════════════ */
+  const wasteItems = [];
+
+  const WASTE_GEOS = [
+    new THREE.BoxGeometry(1, 1.5, 0.7),         // bottle / box
+    new THREE.CylinderGeometry(0.4, 0.45, 1.4, 16), // can
+    new THREE.SphereGeometry(0.7, 16, 16),       // ball
+    new THREE.ConeGeometry(0.5, 1.4, 12),        // cone
+    new THREE.OctahedronGeometry(0.75),           // glass shard
+    new THREE.TorusGeometry(0.55, 0.18, 8, 24),  // ring (e-waste)
+  ];
+
+  function spawnWasteItem() {
+    const catIdx = randI(0, 6);
+    const cat = CATS[catIdx];
+    const geo = WASTE_GEOS[catIdx % WASTE_GEOS.length];
+
+    const mat = new THREE.MeshStandardMaterial({
+      color: cat.hex,
+      roughness: 0.15,
+      metalness: 0.8,
+      emissive: cat.hex,
+      emissiveIntensity: 0.3,
+      transparent: true, opacity: 0.9
+    });
+
+    const mesh = new THREE.Mesh(geo, mat);
+
+    // Start at random orbit position high up
+    const angle = randF(0, Math.PI * 2);
+    const orbitR = randF(14, 28);
+    mesh.position.set(
+      Math.cos(angle) * orbitR,
+      randF(5, 22),
+      Math.sin(angle) * orbitR
+    );
+    mesh.castShadow = true;
+    mesh.scale.setScalar(randF(0.6, 1.1));
+    scene.add(mesh);
+
+    // The bin target position (in world)
+    const binAngle = (catIdx / 6) * Math.PI * 2;
+    const binWorld = new THREE.Vector3(Math.cos(binAngle) * 7, -14, Math.sin(binAngle) * 7);
+
+    wasteItems.push({
+      mesh,
+      catIdx,
+      orbitAngle: angle,
+      orbitR,
+      orbitY: mesh.position.y,
+      phase: 'orbit',   // 'orbit' → 'converge' → 'drop' → 'done'
+      phaseTimer: randF(80, 200),
+      rotX: randF(-0.02, 0.02),
+      rotY: randF(-0.02, 0.02),
+      targetBin: binWorld,
+      emissiveBase: 0.3,
+    });
+
+    // holographic guidance line (tube from item to bin)
+    const lineMat = new THREE.LineBasicMaterial({
+      color: cat.hex, transparent: true, opacity: 0.0
+    });
+    const lineGeo = new THREE.BufferGeometry().setFromPoints([mesh.position.clone(), binWorld.clone()]);
+    const line = new THREE.Line(lineGeo, lineMat);
+    scene.add(line);
+    wasteItems[wasteItems.length - 1].guideLine = line;
+    wasteItems[wasteItems.length - 1].guideMat = lineMat;
+    wasteItems[wasteItems.length - 1].lineGeo = lineGeo;
+  }
+
+  // Spawn initial items
+  for (let i = 0; i < 18; i++) spawnWasteItem();
+
+  /* ═══════════════════════════════════════════════════════════
+     NEURAL NETWORK LINES
+  ═══════════════════════════════════════════════════════════ */
+  const neuralNodes = [];
+  const neuralLines = [];
+
+  (function buildNeural() {
+    const count = 28;
+    for (let i = 0; i < count; i++) {
+      const pos = new THREE.Vector3(
+        randF(-35, 35), randF(-12, 20), randF(-30, 10)
+      );
+      neuralNodes.push({ pos, pulse: randF(0, Math.PI * 2), speed: randF(0.4, 1.2) });
+
+      // Sphere node
+      const sm = new THREE.Mesh(
+        new THREE.SphereGeometry(0.15, 8, 8),
+        new THREE.MeshBasicMaterial({ color: 0x00d4ff, transparent: true, opacity: 0.7 })
+      );
+      sm.position.copy(pos);
+      scene.add(sm);
+      neuralNodes[i].mesh = sm;
+    }
+
+    // Connect nearby nodes
+    for (let a = 0; a < count; a++) {
+      for (let b = a + 1; b < count; b++) {
+        const d = neuralNodes[a].pos.distanceTo(neuralNodes[b].pos);
+        if (d < 18) {
+          const lm = new THREE.LineBasicMaterial({
+            color: 0x00d4ff, transparent: true,
+            opacity: Math.max(0, 0.18 - d / 120)
+          });
+          const lg = new THREE.BufferGeometry().setFromPoints([
+            neuralNodes[a].pos, neuralNodes[b].pos
+          ]);
+          const ln = new THREE.Line(lg, lm);
+          scene.add(ln);
+          neuralLines.push({ mat: lm, baseOpacity: Math.max(0, 0.18 - d / 120), a, b });
+        }
+      }
+    }
+  })();
+
+  /* ═══════════════════════════════════════════════════════════
+     DATA STREAM RINGS  (vertical circular rings flying up)
+  ═══════════════════════════════════════════════════════════ */
+  const dataRings = [];
+  (function buildDataRings() {
+    for (let i = 0; i < 6; i++) {
+      const cat = CATS[i];
+      const rg = new THREE.TorusGeometry(randF(2.5, 5), 0.04, 6, 64);
+      const rm = new THREE.MeshBasicMaterial({
+        color: cat.hex, transparent: true, opacity: 0.0,
+        side: THREE.DoubleSide
+      });
+      const ring = new THREE.Mesh(rg, rm);
+      ring.position.set(randF(-10, 10), randF(-20, -10), randF(-15, 15));
+      ring.rotation.x = randF(0, Math.PI);
+      ring.rotation.z = randF(0, Math.PI);
+      scene.add(ring);
+      dataRings.push({ mesh: ring, mat: rm, speed: randF(0.008, 0.02), baseY: ring.position.y });
+    }
+  })();
+
+  /* ═══════════════════════════════════════════════════════════
+     AI SCAN BEAM (vertical cone from brain)
+  ═══════════════════════════════════════════════════════════ */
+  const scanBeam = new THREE.Mesh(
+    new THREE.ConeGeometry(8, 20, 32, 1, true),
+    new THREE.MeshBasicMaterial({
+      color: 0x00d4ff, transparent: true, opacity: 0.04,
+      side: THREE.DoubleSide, depthWrite: false,
+      blending: THREE.AdditiveBlending
+    })
+  );
+  scanBeam.position.set(0, -8, 0);
+  scanBeam.rotation.x = Math.PI;
+  scene.add(scanBeam);
+
+  /* ═══════════════════════════════════════════════════════════
+     HOLOGRAPHIC CITY SILHOUETTE (back plane)
+  ═══════════════════════════════════════════════════════════ */
+  (function buildCityscape() {
+    const BUILDINGS = 24;
+    for (let i = 0; i < BUILDINGS; i++) {
+      const w = randF(2, 5);
+      const h = randF(8, 30);
+      const bGeo = new THREE.BoxGeometry(w, h, randF(1, 3));
+      const bMat = new THREE.MeshStandardMaterial({
+        color: 0x010a18, roughness: 0.3, metalness: 0.8,
+        emissive: 0x001a2e, emissiveIntensity: 0.4,
+        transparent: true, opacity: 0.55
+      });
+      const b = new THREE.Mesh(bGeo, bMat);
+      b.position.set(
+        randF(-80, 80),
+        -18 + h / 2,
+        randF(-70, -40)
+      );
+      b.receiveShadow = true;
+      scene.add(b);
+
+      // Window lights
+      const winMat = new THREE.MeshBasicMaterial({
+        color: Math.random() > 0.5 ? 0x00d4ff : 0x00ff88,
+        transparent: true, opacity: randF(0.05, 0.2)
+      });
+      const win = new THREE.Mesh(new THREE.BoxGeometry(w * 0.8, h * 0.9, 0.05), winMat);
+      win.position.copy(b.position);
+      win.position.z += 1.5;
+      scene.add(win);
+    }
+  })();
+
+  /* ═══════════════════════════════════════════════════════════
+     VOLUMETRIC LIGHT SHAFTS (sprite planes)
+  ═══════════════════════════════════════════════════════════ */
+  (function buildLightShafts() {
+    const shaftMat = new THREE.MeshBasicMaterial({
+      color: 0x00d4ff, transparent: true, opacity: 0.025,
+      side: THREE.DoubleSide, depthWrite: false,
+      blending: THREE.AdditiveBlending
+    });
+    [-15, 0, 15].forEach(x => {
+      const shaft = new THREE.Mesh(new THREE.ConeGeometry(3, 40, 8, 1, true), shaftMat.clone());
+      shaft.position.set(x, 10, 0);
+      shaft.rotation.x = Math.PI;
+      scene.add(shaft);
+    });
+  })();
+
+  /* ═══════════════════════════════════════════════════════════
+     CAMERA ORBIT SYSTEM
+  ═══════════════════════════════════════════════════════════ */
+  let camAngle = 0;
+  const CAM_RADIUS = 55;
+  const CAM_Y_BASE = 12;
+  const CAM_Y_AMP = 5;
+  const CAM_Y_SPEED = 0.0002;
+
+  /* ═══════════════════════════════════════════════════════════
+     COUNTER ANIMATIONS
+  ═══════════════════════════════════════════════════════════ */
+  function animateCounter(id, target, suffix, duration) {
+    const el = document.getElementById(id);
+    let start = null;
+    const step = ts => {
+      if (!start) start = ts;
+      const p = Math.min((ts - start) / duration, 1);
+      const ease = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(ease * target) + (suffix || '');
+      if (p < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+  setTimeout(() => {
+    animateCounter('count-items', 24187, '', 2400);
+    animateCounter('count-acc', 99.8, '%', 2800);
+    animateCounter('count-co2', 4823, ' kg', 2600);
+  }, 600);
+
+  /* ═══════════════════════════════════════════════════════════
+     MAIN ANIMATE LOOP
+  ═══════════════════════════════════════════════════════════ */
+  const clock = new THREE.Clock();
+  let frameCount = 0;
+
+  function animate() {
+    requestAnimationFrame(animate);
+    const elapsed = clock.getElapsedTime();
+    const dt = clock.getDelta ? 0.016 : 0.016;
+    frameCount++;
+
+    /* ── Camera orbit with mouse parallax ─────────────── */
+    camAngle += 0.0018;
+    mouse.px += (mouse.x - mouse.px) * 0.04;
+    mouse.py += (mouse.y - mouse.py) * 0.04;
+
+    const camX = Math.cos(camAngle) * CAM_RADIUS + mouse.px * 4;
+    const camZ = Math.sin(camAngle) * CAM_RADIUS + mouse.py * 2;
+    const camY = CAM_Y_BASE + Math.sin(elapsed * CAM_Y_SPEED * 1000) * CAM_Y_AMP + mouse.py * 3;
+    camera.position.set(camX, camY, camZ);
+    camera.lookAt(0, 0, 0);
+
+    /* ── Station brain pulse ───────────────────────────── */
+    if (station._brain) {
+      const pulse = 0.5 + 0.5 * Math.sin(elapsed * 2.4);
+      station._brain.material.emissiveIntensity = 0.3 + pulse * 0.7;
+      station._scanRing.rotation.y = elapsed * 1.5;
+      station._scanRing.rotation.z = elapsed * 0.7;
+      station._scanRing2.rotation.x = elapsed * 1.2;
+      station._scanRing2.rotation.y = elapsed * 0.4;
+      station._wfBrain.rotation.y = elapsed * 0.3;
+      station._wfBrain.rotation.x = elapsed * 0.2;
+    }
+
+    /* ── Scan beam pulsing ─────────────────────────────── */
+    scanBeam.material.opacity = 0.02 + 0.03 * Math.sin(elapsed * 1.8);
+    scanBeam.rotation.y = elapsed * 0.5;
+
+    /* ── Light animation ───────────────────────────────── */
+    lightBlue.intensity  = 3.0 + 1.2 * Math.sin(elapsed * 0.8);
+    lightGreen.intensity = 2.5 + 1.0 * Math.sin(elapsed * 1.1 + 1);
+    lightPurp.intensity  = 1.5 + 0.8 * Math.sin(elapsed * 0.6 + 2);
+
+    /* ── Waste items ───────────────────────────────────── */
+    wasteItems.forEach((item, idx) => {
+      if (item.phase === 'orbit') {
+        // Float in orbit
+        item.orbitAngle += 0.003 + idx * 0.00005;
+        item.mesh.position.x = Math.cos(item.orbitAngle) * item.orbitR;
+        item.mesh.position.z = Math.sin(item.orbitAngle) * item.orbitR;
+        item.mesh.position.y = item.orbitY + Math.sin(elapsed * 0.8 + idx) * 0.8;
+        item.mesh.rotation.x += item.rotX;
+        item.mesh.rotation.y += item.rotY;
+        item.phaseTimer--;
+
+        // Gently pulse emissive
+        item.mesh.material.emissiveIntensity = item.emissiveBase + 0.15 * Math.sin(elapsed * 2 + idx);
+
+        if (item.phaseTimer <= 0) {
+          item.phase = 'converge';
+          item.guideMat.opacity = 0.55;
+        }
+
+      } else if (item.phase === 'converge') {
+        // Move toward bin
+        const target = item.targetBin;
+        item.mesh.position.lerp(target, 0.025);
+        item.mesh.rotation.x += item.rotX * 2;
+        item.mesh.rotation.y += item.rotY * 2;
+        item.mesh.material.emissiveIntensity = 0.6 + 0.4 * Math.sin(elapsed * 6);
+        item.guideMat.opacity = Math.max(0, item.guideMat.opacity - 0.004);
+
+        // Update guide line
+        const positions = item.lineGeo.attributes.position.array;
+        positions[0] = item.mesh.position.x;
+        positions[1] = item.mesh.position.y;
+        positions[2] = item.mesh.position.z;
+        item.lineGeo.attributes.position.needsUpdate = true;
+
+        const dist = item.mesh.position.distanceTo(target);
+        if (dist < 1.5) {
+          item.phase = 'drop';
+          item.mesh.material.opacity = 0.6;
+        }
+
+      } else if (item.phase === 'drop') {
+        item.mesh.material.opacity -= 0.025;
+        item.mesh.scale.multiplyScalar(0.97);
+        if (item.mesh.material.opacity <= 0) {
+          // Remove & respawn
+          scene.remove(item.mesh);
+          scene.remove(item.guideLine);
+          wasteItems.splice(idx, 1);
+          spawnWasteItem();
+        }
+      }
+    });
+
+    /* ── Neural nodes pulse ────────────────────────────── */
+    neuralNodes.forEach((n, i) => {
+      n.pulse += n.speed * 0.02;
+      const p = 0.4 + 0.6 * Math.abs(Math.sin(n.pulse));
+      n.mesh.material.opacity = p * 0.7;
+      n.mesh.scale.setScalar(0.8 + 0.4 * p);
+    });
+
+    neuralLines.forEach(l => {
+      const p = 0.5 + 0.5 * Math.sin(elapsed * 1.2 + l.a * 0.3 + l.b * 0.2);
+      l.mat.opacity = l.baseOpacity * (0.5 + p * 0.8);
+    });
+
+    /* ── Data rings float up ───────────────────────────── */
+    dataRings.forEach((dr, i) => {
+      dr.mesh.position.y += dr.speed;
+      dr.mesh.rotation.z += 0.008 + i * 0.002;
+      dr.mat.opacity = 0.12 + 0.1 * Math.sin(elapsed * 1.5 + i);
+      if (dr.mesh.position.y > 20) {
+        dr.mesh.position.y = dr.baseY;
+        dr.mat.opacity = 0;
+      }
+    });
+
+    /* ── Star fields ───────────────────────────────────── */
+    starField.rotation.y = elapsed * 0.008;
+    starField.rotation.x = elapsed * 0.003;
+    dustField.rotation.y = -elapsed * 0.012;
+    energyField.rotation.z = elapsed * 0.01;
+
+    /* ── Bin pulse/glow animation ──────────────────────── */
+    CATS.forEach((cat, i) => {
+      const bin = station['bin' + i];
+      if (bin) {
+        bin.position.y = bin._baseY + Math.sin(elapsed * 1.2 + i * 1.1) * 0.15;
+        const kids = bin.children;
+        kids.forEach(c => {
+          if (c.material && c.material.emissiveIntensity !== undefined) {
+            c.material.emissiveIntensity = 0.3 + 0.2 * Math.sin(elapsed * 2 + i);
+          }
+        });
+      }
+    });
+
+    renderer.render(scene, camera);
+  }
+
+  animate();
+
+  /* ── Resize ─────────────────────────────────────────── */
+  window.addEventListener('resize', () => {
+    camera.aspect = W() / H();
+    camera.updateProjectionMatrix();
+    renderer.setSize(W(), H());
+  });
+
+  /* ── Classification % live cycling ─────────────────── */
+  const pctEls = ['pct-plastic','pct-metal','pct-paper','pct-glass','pct-organic','pct-ewaste'];
+  const pctBase = [34, 18, 22, 11, 9, 6];
+  setInterval(() => {
+    pctEls.forEach((id, i) => {
+      const v = pctBase[i] + randI(-2, 3);
+      document.getElementById(id).textContent = Math.max(1, v) + '%';
+    });
+  }, 2200);
+
+})();
+</script>
+</body>
+</html>

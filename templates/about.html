@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About | EcoSort AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Three.js postprocessing (EffectComposer + passes) -->
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/postprocessing/UnrealBloomPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/shaders/FXAAShader.js"></script>
+    <!-- GSAP for background interactions -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        .about-main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            margin-bottom: 4rem;
+        }
+        @media (max-width: 768px) {
+            .about-main-grid {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+        }
+        .pipeline-card {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(5px);
+            padding: 1.5rem;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            display: flex;
+            gap: 1.25rem;
+            transition: all 0.3s ease;
+        }
+        .pipeline-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--primary);
+            box-shadow: var(--shadow);
+        }
+        .pipeline-num {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            background: var(--primary-light);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Premium Animated Background -->
+    <div class="bg-container">
+        <div class="blob-container">
+            <div class="blob blob-1"></div>
+            <div class="blob blob-2"></div>
+            <div class="blob blob-3"></div>
+            <div class="blob blob-4"></div>
+        </div>
+        <canvas id="bg-canvas"></canvas>
+    </div>
+
+    <div class="layout">
+        <!-- Navigation -->
+        <nav class="container" style="display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 0; width: 100%;">
+            <div class="logo">
+                <i class="fas fa-leaf"></i> EcoSort AI
+            </div>
+            <div class="nav-links">
+                <a href="/">Scanner</a>
+                <a href="/#dashboard">Analytics</a>
+                <a href="/about">About</a>
+                <a href="/contact">Contact</a>
+                {% if user %}
+                    <span style="color: var(--primary-dark); font-weight: 700; margin: 0 1rem;"><i class="fas fa-user-circle"></i> {{ user }}</span>
+                    <a href="/logout" class="btn-nav" style="background: var(--secondary);">Logout</a>
+                {% else %}
+                    <a href="/?login=true" class="btn-nav">Portal Login</a>
+                {% endif %}
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <section class="hero container animate-up" style="padding: 4rem 0;">
+            <div class="hero-content">
+                <div class="category-badge" style="margin-bottom: 1rem;"><i class="fas fa-seedling"></i> Our Mission</div>
+                <h1>Sustainability Through <br><span style="background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Intelligence.</span></h1>
+                <p style="max-width: 520px;">EcoSort AI is dedicated to closing the recycling loop by providing enterprise-grade waste classification technology to communities and businesses. By combining machine learning with real-time analytics, we power the transition to a zero-waste future.</p>
+                <div style="display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
+                    <a href="/" class="btn btn-primary"><i class="fas fa-recycle"></i> Start Scanning</a>
+                    <a href="/contact" class="btn btn-outline"><i class="fas fa-handshake"></i> Contact Partnership</a>
+                </div>
+            </div>
+            <div class="hero-image" style="display: flex; justify-content: center; align-items: center;">
+                 <img src="{{ url_for('static', filename='images/hero.png') }}" alt="Mission" style="width: 100%; max-width: 450px; border-radius: 24px; box-shadow: var(--shadow-lg);">
+            </div>
+        </section>
+
+        <!-- About Core Details Section -->
+        <section class="container animate-up" style="padding-bottom: 4rem;">
+            <div class="dashboard-card">
+                <div class="about-main-grid">
+                    <div>
+                        <h2 style="margin-bottom: 1.5rem; color: var(--text); font-size: 2.2rem;">Why EcoSort AI?</h2>
+                        <p style="color: var(--text-muted); line-height: 1.8; margin-bottom: 1.5rem; font-size: 1.05rem;">
+                            Waste segregation is the first and most critical step in the circular economy. Traditional recycling models fail due to high contamination rates—when incorrect materials end up in recycling streams, entire batches are sent to landfills.
+                        </p>
+                        <p style="color: var(--text-muted); line-height: 1.8; margin-bottom: 1.5rem; font-size: 1.05rem;">
+                            EcoSort AI uses state-of-the-art Convolutional Neural Networks (CNNs) to analyze waste items in milliseconds, guiding users with immediate, actionable segregation steps. This eliminates guesswork and reduces stream contamination by up to 85%.
+                        </p>
+                        <p style="color: var(--text-muted); line-height: 1.8; font-size: 1.05rem;">
+                            By digitizing waste intelligence, we empower individuals, facilities managers, and municipalities to track sustainability performance dynamically and verify environmental impact with transparent, real-time metrics.
+                        </p>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 1.5rem; justify-content: center;">
+                        <div class="feature-card" style="padding: 1.75rem;">
+                            <h3 style="font-size: 1.2rem; margin-bottom: 0.5rem; color: var(--primary-dark);"><i class="fas fa-check-circle" style="color: var(--primary); margin-right: 0.5rem;"></i> 98% Prediction Accuracy</h3>
+                            <p class="text-muted" style="font-size: 0.95rem; line-height: 1.6;">Trained on extensive datasets of consumer waste including complex plastic shapes, paper varieties, and multi-colored alloys.</p>
+                        </div>
+                        <div class="feature-card" style="padding: 1.75rem;">
+                            <h3 style="font-size: 1.2rem; margin-bottom: 0.5rem; color: var(--secondary);"><i class="fas fa-check-circle" style="color: var(--secondary); margin-right: 0.5rem;"></i> Real-time Deep Learning</h3>
+                            <p class="text-muted" style="font-size: 0.95rem; line-height: 1.6;">Utilizes optimized MobileNetV2 architecture running fast CPU-based inference to classify objects immediately upon upload or camera frame capture.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <hr style="border: 0; height: 1px; background: var(--border); margin: 3rem 0;">
+
+                <!-- AI Pipeline Section -->
+                <div style="margin-bottom: 3rem; text-align: center;">
+                    <h2 style="font-size: 2rem; color: var(--text);">How the AI Model Works</h2>
+                    <p class="text-muted" style="margin-top: 0.5rem;">The underlying technology that powers our circular economy classifier.</p>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                    <!-- Step 1 -->
+                    <div class="pipeline-card">
+                        <div class="pipeline-num">1</div>
+                        <div>
+                            <h4 style="font-size: 1.05rem; color: var(--text); margin-bottom: 0.25rem;">Image Capture</h4>
+                            <p class="text-muted" style="font-size: 0.9rem; line-height: 1.5;">User uploads an image file or captures a live frame from the device camera.</p>
+                        </div>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="pipeline-card">
+                        <div class="pipeline-num">2</div>
+                        <div>
+                            <h4 style="font-size: 1.05rem; color: var(--text); margin-bottom: 0.25rem;">Preprocessing</h4>
+                            <p class="text-muted" style="font-size: 0.9rem; line-height: 1.5;">OpenCV color-converts BGR to RGB, resizes to 224x224, and normalizes pixel arrays.</p>
+                        </div>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="pipeline-card">
+                        <div class="pipeline-num">3</div>
+                        <div>
+                            <h4 style="font-size: 1.05rem; color: var(--text); margin-bottom: 0.25rem;">CNN Inference</h4>
+                            <p class="text-muted" style="font-size: 0.9rem; line-height: 1.5;">MobileNetV2 extracts deep features and scores 1000 standard ImageNet classes.</p>
+                        </div>
+                    </div>
+
+                    <!-- Step 4 -->
+                    <div class="pipeline-card">
+                        <div class="pipeline-num">4</div>
+                        <div>
+                            <h4 style="font-size: 1.05rem; color: var(--text); margin-bottom: 0.25rem;">Score Aggregation</h4>
+                            <p class="text-muted" style="font-size: 0.9rem; line-height: 1.5;">Top predictions map to categories (Plastic, Paper, Metal, Organic) using substring matching.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Environmental Impact Grid Section -->
+        <section class="container animate-up" style="padding-bottom: 6rem;">
+            <div style="margin-bottom: 3rem; text-align: center;">
+                <h2>Material Impact & Guidelines</h2>
+                <p class="text-muted">Why precise segregation makes an immediate difference to our planet.</p>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 2rem;">
+                <!-- Plastic Card -->
+                <div class="dashboard-card" style="margin-bottom: 0; padding: 2rem; border-top: 4px solid var(--primary);">
+                    <h3 style="color: var(--primary); margin-bottom: 1rem;"><i class="fas fa-recycle" style="margin-right: 0.5rem;"></i> Plastic</h3>
+                    <ul style="list-style-type: none; display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.95rem; line-height: 1.5;">
+                        <li><i class="fas fa-arrow-right" style="color: var(--primary); margin-right: 0.5rem;"></i> Saves raw petroleum resources</li>
+                        <li><i class="fas fa-arrow-right" style="color: var(--primary); margin-right: 0.5rem;"></i> Mitigates microplastic water pollution</li>
+                        <li><i class="fas fa-arrow-right" style="color: var(--primary); margin-right: 0.5rem;"></i> Recycled plastics power textiles & packaging</li>
+                    </ul>
+                </div>
+                
+                <!-- Paper Card -->
+                <div class="dashboard-card" style="margin-bottom: 0; padding: 2rem; border-top: 4px solid var(--secondary);">
+                    <h3 style="color: var(--secondary); margin-bottom: 1rem;"><i class="fas fa-tree" style="margin-right: 0.5rem;"></i> Paper & Cardboard</h3>
+                    <ul style="list-style-type: none; display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.95rem; line-height: 1.5;">
+                        <li><i class="fas fa-arrow-right" style="color: var(--secondary); margin-right: 0.5rem;"></i> 1 ton of recycled paper saves 17 trees</li>
+                        <li><i class="fas fa-arrow-right" style="color: var(--secondary); margin-right: 0.5rem;"></i> Uses 40% less energy than virgin pulp</li>
+                        <li><i class="fas fa-arrow-right" style="color: var(--secondary); margin-right: 0.5rem;"></i> Must keep oil-free to avoid bale rejection</li>
+                    </ul>
+                </div>
+
+                <!-- Metal Card -->
+                <div class="dashboard-card" style="margin-bottom: 0; padding: 2rem; border-top: 4px solid #be185d;">
+                    <h3 style="color: #be185d; margin-bottom: 1rem;"><i class="fas fa-cube" style="margin-right: 0.5rem;"></i> Metal & Alloys</h3>
+                    <ul style="list-style-type: none; display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.95rem; line-height: 1.5;">
+                        <li><i class="fas fa-arrow-right" style="color: #be185d; margin-right: 0.5rem;"></i> Saves 95% energy compared to raw bauxite</li>
+                        <li><i class="fas fa-arrow-right" style="color: #be185d; margin-right: 0.5rem;"></i> Infinitely recyclable with zero quality loss</li>
+                        <li><i class="fas fa-arrow-right" style="color: #be185d; margin-right: 0.5rem;"></i> Reduces destructive open-pit mining</li>
+                    </ul>
+                </div>
+
+                <!-- Organic Card -->
+                <div class="dashboard-card" style="margin-bottom: 0; padding: 2rem; border-top: 4px solid #f59e0b;">
+                    <h3 style="color: #f59e0b; margin-bottom: 1rem;"><i class="fas fa-leaf" style="margin-right: 0.5rem;"></i> Organic Waste</h3>
+                    <ul style="list-style-type: none; display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.95rem; line-height: 1.5;">
+                        <li><i class="fas fa-arrow-right" style="color: #f59e0b; margin-right: 0.5rem;"></i> Composting traps carbon in the soil</li>
+                        <li><i class="fas fa-arrow-right" style="color: #f59e0b; margin-right: 0.5rem;"></i> Prevents toxic landfill methane emissions</li>
+                        <li><i class="fas fa-arrow-right" style="color: #f59e0b; margin-right: 0.5rem;"></i> Creates nutrient-rich natural fertilizers</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="container" style="padding: 4rem 0; border-top: 1px solid var(--border); text-align: center;">
+            <div class="logo" style="justify-content: center; margin-bottom: 1.5rem;">
+                <i class="fas fa-leaf"></i> EcoSort AI
+            </div>
+            <p class="text-muted">&copy; 2026 EcoSort AI. Driving global sustainability with precision intelligence.</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/three-bg.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bg-animation.js') }}"></script>
+</body>
+</html>
