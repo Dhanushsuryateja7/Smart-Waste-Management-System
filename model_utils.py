@@ -69,26 +69,32 @@ IMAGENET_TO_WASTE = {
 }
 
 
+import os
+
+import os
+
 class WasteClassifier:
     def __init__(self):
-        self.has_tf = False
-        self.model = None
-        self.decode_fn = None
-        self.preprocess_fn = None
+        self.session = None
+        self.input_name = None
+        self.labels = []
+        
         try:
-            import tensorflow as tf
-            from tensorflow.keras.applications import MobileNetV2
-            from tensorflow.keras.applications.mobilenet_v2 import (
-                decode_predictions, preprocess_input
-            )
-            # Load MobileNetV2 with pre-trained ImageNet weights
-            self.model = MobileNetV2(weights='imagenet', include_top=True)
-            self.decode_fn = decode_predictions
-            self.preprocess_fn = preprocess_input
-            self.has_tf = True
-            print("Success: MobileNetV2 loaded with ImageNet weights.")
+            import onnxruntime as ort
+            model_path = os.path.join(os.path.dirname(__file__), 'models', 'mobilenetv2.onnx')
+            label_path = os.path.join(os.path.dirname(__file__), 'models', 'imagenet_classes.txt')
+            
+            if os.path.exists(model_path) and os.path.exists(label_path):
+                self.session = ort.InferenceSession(model_path)
+                self.input_name = self.session.get_inputs()[0].name
+                
+                with open(label_path, 'r') as f:
+                    self.labels = [line.strip() for line in f.readlines()]
+                print("Success: ONNX model and labels loaded.")
+            else:
+                print("Warning: ONNX model files not found. Run download_onnx.py. Running in simulation mode.")
         except ImportError:
-            print("Warning: TensorFlow not found. Running in simulation mode.")
+            print("Warning: onnxruntime not found. Running in simulation mode.")
 
     def _map_imagenet_to_waste(self, class_name):
         """Map an ImageNet class name to one of our 4 waste categories."""
@@ -113,11 +119,11 @@ class WasteClassifier:
         if any(w in class_lower for w in ['food', 'fruit', 'vegetable', 'plant', 'flower', 'organic', 'leaf', 'wood', 'timber', 'straw', 'peel', 'seed', 'bread', 'meat', 'compost']):
             return 'Organic'
             
-        return None  # Changed from 'Plastic' to allow fallback picking of lower-confidence valid maps
+        return None  # Allow fallback picking of lower-confidence valid maps
 
     def predict(self, preprocessed_image):
         """Predict the class of the waste."""
-        if not self.has_tf or self.model is None:
+        if self.session is None:
             # Simulation mode fallback
             class_idx = np.random.randint(0, len(CATEGORIES))
             confidence = np.random.uniform(0.70, 0.95)
@@ -128,29 +134,51 @@ class WasteClassifier:
                 'demo_mode': True
             }
 
-        # Real prediction using ImageNet
-        import tensorflow as tf
-        from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
+        # Real prediction using ONNX
+        import cv2
         
         # Make sure image has batch dimension
         if len(preprocessed_image.shape) == 3:
             preprocessed_image = np.expand_dims(preprocessed_image, axis=0)
 
-        # Resize to 224x224 for MobileNetV2
+        # Resize to 224x224 for MobileNet
         if preprocessed_image.shape[1:3] != (224, 224):
-            img = tf.image.resize(preprocessed_image[0], (224, 224)).numpy()
+            img = cv2.resize(preprocessed_image[0], (224, 224))
             img = np.expand_dims(img, axis=0)
         else:
             img = preprocessed_image
 
-        # Important: the input should be 0-255 scaled before preprocess_input
-        # if it's already scaled to 0-1, it needs to be unscaled since preprocess_input expects 0-255 images
-        if np.max(img) <= 1.0:
-            img = img * 255.0
+        # Preprocess based on standard ImageNet normalization
+        # onnx expects inputs NCHW instead of NHWC
+        # and standard normalization mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+        if np.max(img) > 1.0:
+            img = img.astype(np.float32) / 255.0
+        else:
+            img = img.astype(np.float32)
+            
+        mean = np.array([0.485, 0.456, 0.406], dtype=np.float32)
+        std = np.array([0.229, 0.224, 0.225], dtype=np.float32)
+        
+        img = (img - mean) / std
+        
+        # Convert to NCHW
+        img = np.transpose(img, (0, 3, 1, 2))
 
-        img = preprocess_input(img)
-        preds = self.model.predict(img, verbose=0)
-        decoded = self.decode_fn(preds, top=5)[0]
+        # Run inference
+        outputs = self.session.run(None, {self.input_name: img})
+        preds = outputs[0][0] # shape (1000,)
+        
+        # Softmax to get probabilities
+        exp_preds = np.exp(preds - np.max(preds))
+        probs = exp_preds / np.sum(exp_preds)
+
+        # Get top 5
+        top_k = 5
+        top_indices = np.argsort(probs)[-top_k:][::-1]
+        
+        decoded = []
+        for i in top_indices:
+            decoded.append(('', self.labels[i], probs[i]))
 
         # Accumulate scores for each waste category across the top-5 ImageNet predictions
         category_scores = {'Plastic': 0.0, 'Paper': 0.0, 'Metal': 0.0, 'Organic': 0.0}
@@ -186,7 +214,7 @@ class WasteClassifier:
             best_confidence = 0.50 + 0.45 * first_score
             best_label = first_class
 
-        print(f"ImageNet prediction: {best_label} -> {best_category} (confidence: {best_confidence*100:.2f}%)")
+        print(f"ONNX prediction: {best_label} -> {best_category} (confidence: {best_confidence*100:.2f}%)")
 
         return {
             'category': best_category,
@@ -194,6 +222,7 @@ class WasteClassifier:
             'instructions': INSTRUCTIONS[best_category],
             'demo_mode': False
         }
+
 
 
 # Global instance for use in Flask app
